@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaluador de Lectura Pro v2.1 - Responsive</title>
+<!-- Tailwind CSS para el diseño moderno -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+
+  :root {
+    --text-main: #f8fafc;
+    --accent: #06b6d4; /* Cyan */
+  }
+
+  body { 
+    font-family: 'Nunito', sans-serif; 
+    margin: 0; 
+    background-color: #0a0f1d; 
+    color: var(--text-main); 
+    overflow-x: hidden;
+  }
+
+  /* PANEL SUPERIOR RESPONSIVO */
+  .top-panel {
+    display: flex; flex-direction: column; gap: 20px; 
+    background: rgba(255, 255, 255, 0.03); 
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 1.5rem; 
+    align-items: stretch; margin-bottom: 20px;
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+  }
+
+  @media (min-width: 992px) {
+    .top-panel { flex-direction: row; padding: 25px; }
+  }
+
+  .col-inputs { display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 200px; }
+  .col-texto { flex: 3; display: flex; flex-direction: column; } 
+  .col-botones { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 180px; justify-content: center; }
+
+  textarea { 
+    resize: vertical; min-height: 250px; font-size: 16px; line-height: 1.6;
+    padding: 25px 40px; /* Margen interior amplio para separar del borde izquierdo/derecho */
+    text-align: justify; /* Justificado para mejor lectura */
+    background: rgba(0, 0, 0, 0.4); color: #e2e8f0; 
+    border-radius: 1rem; border: 1px solid rgba(255,255,255,0.1); 
+    outline: none; width: 100%; box-sizing: border-box;
+    transition: all 0.3s ease;
+  }
+  textarea:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(6, 182, 212, 0.3); }
+
+  input { 
+    background: rgba(0, 0, 0, 0.4); color: white; border: 1px solid rgba(255,255,255,0.1); 
+    padding: 12px 16px; border-radius: 0.75rem; font-size: 16px; width: 100%; box-sizing: border-box; outline: none;
+    transition: all 0.3s ease;
+  }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(6, 182, 212, 0.3); }
+
+  /* BOTONES */
+  button { padding: 12px; border: none; border-radius: 0.75rem; cursor: pointer; font-weight: 900; transition: all 0.2s; -webkit-tap-highlight-color: transparent; text-transform: uppercase; letter-spacing: 1px; }
+  button:hover { transform: scale(1.02); }
+  button:active { transform: scale(0.98); }
+  
+  .start { background: linear-gradient(to right, #22c55e, #16a34a); color: white; min-height: 55px; font-size: 16px; box-shadow: 0 0 15px rgba(34,197,94,0.3); }
+  .stop { background: linear-gradient(to right, #ef4444, #dc2626); color: white; box-shadow: 0 0 15px rgba(239,68,68,0.3);}
+  .clean { background: linear-gradient(to right, #f59e0b, #d97706); color: white; box-shadow: 0 0 15px rgba(245,158,11,0.3);}
+  .export { background: linear-gradient(to right, #3b82f6, #2563eb); color: white; box-shadow: 0 0 15px rgba(59,130,246,0.3);}
+  .deleteAll { background: linear-gradient(to right, #7f1d1d, #991b1b); color: white; border: 1px solid rgba(255,255,255,0.1);}
+
+  .grid-cursos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 5px; }
+  .btn-curso { background: rgba(255,255,255,0.05); color: #94a3b8; font-size: 14px; padding: 12px 0; border: 1px solid rgba(255,255,255,0.1); border-radius: 0.5rem; }
+  .btn-curso:hover { background: rgba(255,255,255,0.1); color: white; }
+  .btn-curso.active { background: var(--accent); color: white; border-color: #22d3ee; box-shadow: 0 0 15px rgba(6,182,212,0.4); }
+
+  /* RESULTADOS Y SEMÁFORO (Modificados para que JS funcione intacto) */
+  .card { 
+    background: rgba(30, 41, 59, 0.4); 
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1); 
+    border-radius: 1.5rem; 
+    padding: 20px; 
+    margin-bottom: 20px; 
+    transition: 0.5s; 
+    overflow-x: auto; 
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+  }
+  
+  .status-label { font-size: 12px; color: #67e8f9; margin-bottom: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; gap: 15px; }
+  @media (min-width: 600px) { .stats-grid { grid-template-columns: repeat(5, 1fr); } }
+
+  .stat-val { font-size: 32px; font-weight: 900; display: block; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+  .stat-label { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: bold; letter-spacing: 1px;}
+
+  /* Clases de semáforo inyectadas por JS */
+  .bg-basico { background-color: rgba(239, 68, 68, 0.15) !important; border: 2px solid #ef4444 !important; box-shadow: 0 0 30px rgba(239, 68, 68, 0.2); }
+  .bg-medio { background-color: rgba(245, 158, 11, 0.15) !important; border: 2px solid #f59e0b !important; box-shadow: 0 0 30px rgba(245, 158, 11, 0.2); }
+  .bg-avanzado { background-color: rgba(34, 197, 94, 0.15) !important; border: 2px solid #22c55e !important; box-shadow: 0 0 30px rgba(34, 197, 94, 0.2); }
+
+  #textoVista { 
+    min-height: 80px; font-size: 20px; color: #bae6fd; 
+    background: rgba(0,0,0,0.4); 
+    padding: 25px 40px; /* Margen interior igual al de arriba */
+    text-align: justify; /* Justificado para mejor lectura */
+    border-radius: 1rem; border: 1px solid rgba(255,255,255,0.05); 
+    word-break: break-word; line-height: 1.6;
+  }
+
+  .table-wrapper { overflow-x: auto; width: 100%; }
+  table { width: 100%; border-collapse: collapse; background: rgba(0,0,0,0.2); border-radius: 1rem; min-width: 400px; overflow: hidden; }
+  th { text-align: left; color: #67e8f9; font-size: 12px; font-weight: 900; padding: 15px; border-bottom: 2px solid rgba(255,255,255,0.1); text-transform: uppercase;}
+  td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; font-weight: bold; color: #cbd5e1;}
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* LAYOUT HISTORIAL */
+  .grid-historial { display: grid; grid-template-columns: 1fr; gap: 20px; }
+  @media (min-width: 992px) { .grid-historial { grid-template-columns: 1fr 2fr; } }
+
+  .login { display:flex; height:100vh; justify-content:center; align-items:center; padding: 20px; position: relative; z-index: 10;}
+  .login-box { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); padding: 40px; border-radius: 2rem; text-align: center; width: 100%; max-width: 360px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+  
+  /* Scrollbar personalizado */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb { background: rgba(6, 182, 212, 0.5); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(6, 182, 212, 0.8); }
+</style>
+</head>
+<body>
+
+<!-- Fondo Galáctico Animado -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+  <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-[#0a0f1d] to-[#0a0f1d]"></div>
+  <div class="absolute top-0 left-0 w-full h-full bg-blue-500/5 blur-[150px] mix-blend-screen animate-pulse" style="animation-duration: 10s"></div>
+  <div class="absolute bottom-0 right-0 w-full h-1/2 bg-cyan-500/5 blur-[120px] mix-blend-screen animate-pulse" style="animation-duration: 8s"></div>
+</div>
+
+<div id="login" class="login">
+  <div class="login-box">
+    <div class="text-6xl mb-6 animate-bounce">📖</div>
+    <h2 style="margin-top:0;" class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-6 drop-shadow-md">Nivelador de lectura</h2>
+    <input id="user" placeholder="Usuario" style="margin-bottom:15px" onkeydown="if(event.key === 'Enter') login()">
+    <input id="pass" type="password" placeholder="Clave" style="margin-bottom:25px" onkeydown="if(event.key === 'Enter') login()">
+    <button onclick="login()" style="width:100%; font-size:18px" class="bg-gradient-to-r from-cyan-500 to-blue-600 shadow-lg">INGRESAR 🚀</button>
+  </div>
+</div>
+
+<div id="app" style="display:none;" class="relative z-10 pb-16">
+  <header class="bg-black/20 backdrop-blur-md border-b border-white/10 p-6 mb-6">
+    <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-500 text-center m-0 drop-shadow-lg tracking-widest uppercase">
+      Evaluación de Lectura 
+    </h2>
+  </header>
+
+  <div class="container mx-auto px-4 max-w-7xl">
+    <div class="top-panel">
+      <div class="col-inputs">
+        <div class="status-label">👤 Datos Alumno</div>
+        <input id="nombre" placeholder="Nombre completo">
+        <input id="curso" placeholder="Grado" readonly class="opacity-70">
+        <div class="grid-cursos mt-2">
+          <button class="btn-curso" onclick="setCurso(2, this)">2°</button>
+          <button class="btn-curso" onclick="setCurso(3, this)">3°</button>
+          <button class="btn-curso" onclick="setCurso(4, this)">4°</button>
+          <button class="btn-curso" onclick="setCurso(5, this)">5°</button>
+          <button class="btn-curso" onclick="setCurso(6, this)">6°</button>
+          <button class="btn-curso" onclick="setCurso(8, this)">8°</button>
+        </div>
+      </div>
+
+      <div class="col-texto">
+        <div class="status-label">📝 Texto de Referencia</div>
+        <textarea id="textoBase" placeholder="Pegue aquí el texto de lectura del estudiante..."></textarea>
+      </div>
+
+      <div class="col-botones">
+        <div class="status-label text-center lg:text-left">⚙️ Controles</div>
+        <button class="start" onclick="iniciar()">▶️ Iniciar</button>
+        <button class="stop" onclick="detener()">⛔ Detener</button>
+        <button class="clean" onclick="limpiarPantalla()">🧹 Limpiar</button>
+        <button class="export" onclick="exportarExcel()">📊 Excel</button>
+        <button class="deleteAll" onclick="borrarTodo()">🗑️ Historial</button>
+      </div>
+    </div>
+
+    <div class="text-center md:text-left">
+        <span class="inline-block bg-cyan-900/40 text-cyan-300 font-black px-6 py-2 rounded-full border border-cyan-500/30 mb-4 animate-pulse shadow-[0_0_15px_rgba(6,182,212,0.2)] tracking-widest uppercase text-sm" id="estado">⏳ Listo para evaluar...</span>
+    </div>
+
+    <div class="card">
+      <div class="status-label">🎤 Transcripción en vivo</div>
+      <div id="textoVista">...</div>
+    </div>
+
+    <div id="cardResultado" class="card">
+      <div class="stats-grid">
+        <div><span class="stat-label">Segundos</span><span id="tiempo" class="stat-val">0</span></div>
+        <div><span class="stat-label">Palabras</span><span id="contador" class="stat-val">0</span></div>
+        <div><span class="stat-label">PPM</span><span id="ppm" class="stat-val text-yellow-300">0</span></div>
+        <div><span class="stat-label">Nivel</span><span id="nivel" class="stat-val">-</span></div>
+        <div><span class="stat-label">Precisión</span><span id="precision" class="stat-val text-cyan-300">0%</span></div>
+      </div>
+    </div>
+
+    <div class="grid-historial">
+      <div class="card">
+        <div class="status-label">🏆 Top 5 PPM</div>
+        <ul id="ranking" style="list-style:none; padding:0; margin:0; font-size: 15px; font-weight: bold;"></ul>
+      </div>
+      <div class="card">
+        <div class="status-label">📋 Historial de Evaluaciones</div>
+        <div class="table-wrapper">
+            <table id="tabla"></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Firma / Créditos añadida como solicitaste -->
+<div class="fixed bottom-2 w-full flex justify-center z-[150] pointer-events-none opacity-80 px-2">
+  <span class="bg-white/10 backdrop-blur-sm text-cyan-100 text-[9px] sm:text-xs font-bold px-4 py-1.5 rounded-full shadow-sm border border-cyan-400/30 uppercase tracking-wider text-center line-clamp-1 drop-shadow-md">
+      Creado por Nasslo Muñoz Saez - Ingeniero Informático
+  </span>
+</div>
+
+<!-- LÓGICA DE JAVASCRIPT INTACTA -->
+<script>
+let reconocimiento, texto="", tiempo=0, intervalo, cursoSeleccionado=2, audioCtx=null;
+let datos = JSON.parse(localStorage.getItem("datos")) || [];
+
+const rangos = {
+  2: { basico: 40, medio: 54 }, 3: { basico: 54, medio: 74 },
+  4: { basico: 70, medio: 90 }, 5: { basico: 85, medio: 110 },
+  6: { basico: 100, medio: 130 }, 8: { basico: 125, medio: 165 }
+};
+
+function login() {
+  if(document.getElementById("user").value==="nasslo" && document.getElementById("pass").value==="1987") {
+    document.getElementById("login").style.display="none";
+    document.getElementById("app").style.display="block";
+    cargarTabla();
+  } else alert("Error de acceso");
+}
+
+function setCurso(c, btn) {
+  cursoSeleccionado = c;
+  document.getElementById("curso").value = c + "° Básico";
+  document.querySelectorAll('.btn-curso').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function iniciarAudio() { if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)(); }
+
+function beep(f=800, dur=150) { 
+  if(!audioCtx)return; 
+  let o=audioCtx.createOscillator(); 
+  let g=audioCtx.createGain();
+  o.frequency.value=f; 
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  o.start(); 
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + (dur/1000));
+  setTimeout(()=>o.stop(), dur); 
+}
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if(SpeechRecognition) {
+  reconocimiento = new SpeechRecognition();
+  reconocimiento.lang = "es-CL"; 
+  reconocimiento.continuous = true; 
+  reconocimiento.interimResults = false; // MODIFICADO: Se cambia a 'false' para evitar que el motor adivine y cambie las palabras en vivo
+  reconocimiento.maxAlternatives = 1;
+
+  reconocimiento.onstart = () => {
+    document.getElementById("estado").innerHTML = "🔴 <span style='color:#fb7185'>GRABANDO...</span>";
+    intervalo = setInterval(() => {
+      tiempo++; 
+      document.getElementById("tiempo").textContent = tiempo;
+      if(tiempo >= 60) { 
+        beep(400, 1000); 
+        detener(); 
+      }
+    }, 1000);
+  };
+
+  reconocimiento.onerror = (event) => {
+    console.error("Error de reconocimiento:", event.error);
+    if(event.error === 'not-allowed') {
+        alert("Por favor, permite el acceso al micrófono en la configuración de tu navegador/móvil.");
+    }
+    detener();
+  };
+
+  reconocimiento.onresult = e => {
+    for(let i=e.resultIndex; i<e.results.length; i++) {
+      if(e.results[i].isFinal) texto += " " + e.results[i][0].transcript;
+    }
+    let total = texto.trim();
+    document.getElementById("textoVista").textContent = total;
+    let palabras = total.split(/\s+/).filter(w => w.length > 0).length;
+    document.getElementById("contador").textContent = palabras;
+    let ppm = Math.round((palabras / (tiempo || 1)) * 60);
+    document.getElementById("ppm").textContent = ppm;
+
+    let r = rangos[cursoSeleccionado], nivel = "Básico", clase = "bg-basico";
+    if(ppm > r.medio) { nivel = "Avanzado"; clase = "bg-avanzado"; }
+    else if(ppm >= r.basico) { nivel = "Medio"; clase = "bg-medio"; }
+    document.getElementById("nivel").textContent = nivel;
+    document.getElementById("cardResultado").className = "card " + clase;
+  };
+} else {
+    alert("Tu navegador no soporta el reconocimiento de voz. Usa Chrome en Android o Safari en iOS 14.5+");
+}
+
+function iniciar() {
+  if(!document.getElementById("nombre").value || !document.getElementById("curso").value) return alert("Faltan datos");
+  iniciarAudio(); texto = ""; tiempo = 0;
+  document.getElementById("tiempo").textContent = "0";
+  document.getElementById("contador").textContent = "0";
+  document.getElementById("ppm").textContent = "0";
+  document.getElementById("precision").textContent = "0%";
+  document.getElementById("textoVista").textContent = "...";
+  document.getElementById("cardResultado").className = "card";
+
+  let s = 3;
+  let i = setInterval(() => {
+    document.getElementById("estado").textContent = "⏳ " + s; beep(); s--;
+    if(s < 0) { 
+        clearInterval(i); 
+        try {
+            reconocimiento.start();
+        } catch(e) {
+            console.log("Ya estaba iniciado");
+        }
+    }
+  }, 1000);
+}
+
+function detener() {
+  if(reconocimiento) {
+      try { reconocimiento.stop(); } catch(e) {}
+  }
+  clearInterval(intervalo);
+  document.getElementById("estado").textContent = "✅ Evaluación Completa";
+  evaluarPrecision();
+  guardarRegistro();
+}
+
+function evaluarPrecision() {
+  let baseText = document.getElementById("textoBase").value;
+  if(!baseText) return;
+  // Mejorada la expresión regular para que no borre tildes ni la ñ al evaluar
+  let base = baseText.toLowerCase().replace(/[^a-záéíóúüñ\s]/gi, '').split(/\s+/).filter(x=>x);
+  let leido = texto.toLowerCase().replace(/[^a-záéíóúüñ\s]/gi, '').split(/\s+/).filter(x=>x);
+  if(base.length === 0) return;
+  let ok = 0;
+  leido.forEach(p => { if(base.includes(p)) ok++; }); 
+  document.getElementById("precision").textContent = Math.min(Math.round((ok/base.length)*100), 100) + "%";
+}
+
+function guardarRegistro() {
+  if(tiempo === 0) return;
+  const d = {
+    nombre: document.getElementById("nombre").value,
+    curso: document.getElementById("curso").value,
+    ppm: document.getElementById("ppm").textContent,
+    nivel: document.getElementById("nivel").textContent,
+    precision: document.getElementById("precision").textContent,
+    fecha: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+    transcripcion: document.getElementById("textoVista").textContent,
+    textoBase: document.getElementById("textoBase").value // NUEVO: Guardamos el texto de referencia
+  };
+  datos.push(d);
+  localStorage.setItem("datos", JSON.stringify(datos));
+  cargarTabla();
+}
+
+function cargarTabla() {
+  const t = document.getElementById("tabla");
+  t.innerHTML = "<tr><th>Fecha</th><th>Alumno</th><th>PPM</th><th>Nivel</th><th>🖨️</th></tr>";
+  datos.slice().reverse().forEach((d) => {
+    let r = t.insertRow();
+    r.insertCell(0).textContent = d.fecha;
+    r.insertCell(1).textContent = d.nombre;
+    r.insertCell(2).textContent = d.ppm;
+    r.insertCell(3).textContent = d.nivel;
+    let b = document.createElement("button");
+    b.innerHTML = "🖨️"; 
+    b.style.padding = "6px 10px";
+    b.style.background = "rgba(6, 182, 212, 0.2)";
+    b.style.border = "1px solid rgba(6, 182, 212, 0.5)";
+    b.onclick = () => imprimirInforme(d);
+    r.insertCell(4).appendChild(b);
+  });
+  
+  let rk = [...datos].sort((a,b) => b.ppm - a.ppm).slice(0,5);
+  const rkUl = document.getElementById("ranking");
+  rkUl.innerHTML = "";
+  rk.forEach((x, i) => rkUl.innerHTML += `<li style='padding:12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); color:#e2e8f0;'>${i==0?'<span style="font-size:1.2rem">🥇</span>':i==1?'<span style="font-size:1.2rem">🥈</span>':i==2?'<span style="font-size:1.2rem">🥉</span>':'<span style="font-size:1.2rem">⭐</span>'} ${x.nombre} <span style="color:#fde047; float:right">${x.ppm} PPM</span></li>`);
+}
+
+function imprimirInforme(d) {
+  const w = window.open('', '_blank');
+  
+  const textoReferencia = d.textoBase ? d.textoBase.trim() : "No se ingresó texto de referencia en esta evaluación.";
+  const textoCapturado = d.transcripcion && d.transcripcion !== "..." ? d.transcripcion.trim() : "";
+  
+  // LÓGICA DE COMPARACIÓN PARA EL PDF
+  let htmlTranscripcion = "No se capturó audio en esta evaluación.";
+  
+  if (textoCapturado) {
+    // Limpiamos el texto base para la comparación (sin comas, puntos, etc., pero manteniendo tildes)
+    let baseWords = textoReferencia.toLowerCase().replace(/[^a-záéíóúüñ\s]/gi, '').split(/\s+/).filter(x=>x);
+    let leidoWords = textoCapturado.split(/\s+/).filter(x=>x); // Mantenemos las palabras originales leídas
+    
+    // Comparamos cada palabra leída con el texto base
+    htmlTranscripcion = leidoWords.map(word => {
+        let cleanWord = word.toLowerCase().replace(/[^a-záéíóúüñ\s]/gi, '');
+        // Si la palabra leída no está en absoluto en el texto base, la marcamos de amarillo
+        if (cleanWord && !baseWords.includes(cleanWord)) {
+            return `<span style="background-color: #fef08a; font-weight: bold; padding: 2px 4px; border-radius: 4px; border: 1px solid #facc15;">${word}</span>`;
+        }
+        return word;
+    }).join(" ");
+  }
+
+  w.document.write(`
+    <html><head><title>Informe ${d.nombre}</title><style>
+      body{font-family:sans-serif; padding:20px;} .box{border:2px solid #3b82f6; padding:20px; border-radius:15px;}
+      h1{color:#1e3a8a; border-bottom:1px solid #eee; font-size: 20px;} .grid{display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-top:20px;}
+      .val{font-size:20px; font-weight:bold; color:#2563eb;}
+      .texto-box { margin-top: 10px; padding: 20px 35px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; color: #334155; line-height: 1.6; text-align: justify;}
+      .titulo-seccion { font-size: 16px; color:#1e3a8a; margin-bottom: 5px; margin-top: 25px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;}
+    </style></head><body>
+      <div class="box">
+        <h1>Informe de Evaluación Lectora</h1>
+        <div class="grid">
+          <div><strong>Alumno:</strong><br>${d.nombre}</div>
+          <div><strong>Fecha:</strong><br>${d.fecha}</div>
+          <div><strong>Curso:</strong><br>${d.curso}</div>
+          <div><strong>Velocidad:</strong><br><span class="val">${d.ppm} PPM</span></div>
+          <div><strong>Nivel:</strong><br><span class="val">${d.nivel}</span></div>
+          <div><strong>Precisión:</strong><br><span class="val">${d.precision}</span></div>
+        </div>
+        
+        <h2 class="titulo-seccion">📚 Texto de Referencia:</h2>
+        <div class="texto-box" style="background: #f1f5f9; white-space: pre-wrap;">${textoReferencia}</div>
+        
+        <h2 class="titulo-seccion">🎤 Transcripción del Micrófono:</h2>
+        <p style="font-size: 12px; color: #64748b; margin-top: 0;">* Las palabras marcadas en amarillo representan errores, omisiones o variaciones respecto al texto original.</p>
+        <div class="texto-box" style="font-style: italic;">
+          ${htmlTranscripcion}
+        </div>
+
+      </div>
+      <script>window.onload=function(){window.print(); window.close();}<\/script>
+    </body></html>
+  `);
+  w.document.close();
+}
+
+function exportarExcel() {
+  if (datos.length === 0) return alert("No hay datos");
+  let csv = "\uFEFFNombre;Curso;Fecha;PPM;Nivel;Precision\n";
+  datos.forEach(d => {
+    csv += `"${d.nombre}";"${d.curso}";"${d.fecha}";"${d.ppm}";"${d.nivel}";"${d.precision}"\n`;
+  });
+  let a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
+  a.download = "Reporte_Lectura.csv"; a.click();
+}
+
+function limpiarPantalla() {
+  if(!confirm("¿Deseas limpiar los datos actuales?")) return;
+  document.getElementById("nombre").value = "";
+  document.getElementById("curso").value = "";
+  document.getElementById("textoBase").value = "";
+  document.getElementById("tiempo").textContent = "0";
+  document.getElementById("contador").textContent = "0";
+  document.getElementById("ppm").textContent = "0";
+  document.getElementById("nivel").textContent = "-";
+  document.getElementById("precision").textContent = "0%";
+  document.getElementById("textoVista").textContent = "...";
+  document.getElementById("estado").textContent = "⏳ Listo para evaluar...";
+  document.getElementById("cardResultado").className = "card";
+  document.querySelectorAll('.btn-curso').forEach(b => b.classList.remove('active'));
+  texto = "";
+  tiempo = 0;
+  clearInterval(intervalo);
+}
+
+function borrarTodo() { 
+  if(confirm("¿Borrar todo el historial permanentemente?")){ 
+    datos=[]; localStorage.clear(); cargarTabla(); 
+  }
+}
+</script>
+</body>
+</html>
