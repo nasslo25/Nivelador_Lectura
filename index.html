@@ -253,6 +253,11 @@
     <input id="user" placeholder="Usuario" style="margin-bottom:15px" onkeydown="if(event.key === 'Enter') login()">
     <input id="pass" type="password" placeholder="Clave" style="margin-bottom:25px" onkeydown="if(event.key === 'Enter') login()">
     <button onclick="login()" style="width:100%; font-size:18px" class="bg-gradient-to-r from-cyan-500 to-blue-600 shadow-lg">INGRESAR 🚀</button>
+    
+    <!-- Botón de instalación (oculto por defecto) -->
+    <button id="btnInstalar" onclick="instalarApp()" style="display:none; width:100%; font-size:16px; margin-top: 15px; padding: 12px; border: none; border-radius: 0.75rem; cursor: pointer; font-weight: 900; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px; background: linear-gradient(to right, #8b5cf6, #6d28d9); color: white; box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);">
+      📲 Instalar como App
+    </button>
   </div>
 </div>
 
@@ -610,6 +615,34 @@ if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || wi
       .then(reg => console.log('Service Worker de Nivelador registrado.'))
       .catch(err => console.log('Error Service Worker:', err));
   });
+}
+
+// Lógica para capturar el evento de instalación y mostrar el botón
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Prevenir que el navegador muestre su propio prompt automático
+  e.preventDefault();
+  // Guardar el evento para que pueda ser disparado más tarde
+  deferredPrompt = e;
+  // Mostrar nuestro botón personalizado en la pantalla de login
+  const btn = document.getElementById('btnInstalar');
+  if(btn) btn.style.display = 'block';
+});
+
+function instalarApp() {
+  if (deferredPrompt) {
+    // Mostrar el prompt de instalación nativo del sistema
+    deferredPrompt.prompt();
+    // Esperar a que el usuario responda
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('El usuario aceptó la instalación');
+        // Ocultar el botón si ya instaló la app
+        document.getElementById('btnInstalar').style.display = 'none';
+      }
+      deferredPrompt = null;
+    });
+  }
 }
 </script>
 </body>
